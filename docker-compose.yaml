@@ -1,0 +1,34 @@
+# nginx proxy address - http://172.17.0.1:3008
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "1"
+
+services:
+  psitransfer:
+    image: psitransfer/psitransfer:latest
+    container_name: psitransfer-app
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - psitransfer
+    ports:
+      - "3008:3008"
+    environment:
+      TZ: ${TZ:-America/New_York}
+      PUID: ${SERVICE_USER:-1000}
+      PGID: ${SERVICE_GROUP:-1000}
+    volumes:
+      - ./rootfs/config/psitransfer:/config
+      - ./rootfs/data/psitransfer:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3008"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  psitransfer:
+    external: false
