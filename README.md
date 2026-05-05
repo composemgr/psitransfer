@@ -47,8 +47,8 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/config/psitransfer` - Data storage
-- `./rootfs/data/psitransfer` - Data storage
+- `./volumes/config/psitransfer` - Data storage
+- `./volumes/data/psitransfer` - Data storage
 
 ## 🔍 Logging
 
