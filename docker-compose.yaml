@@ -21,8 +21,8 @@ services:
       PUID: ${SERVICE_USER:-1000}
       PGID: ${SERVICE_GROUP:-1000}
     volumes:
-      - ./rootfs/config/psitransfer:/config
-      - ./rootfs/data/psitransfer:/data
+      - ./volumes/config/psitransfer:/config
+      - ./volumes/data/psitransfer:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3008"]
       interval: 30s
