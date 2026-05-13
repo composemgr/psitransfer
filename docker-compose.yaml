@@ -1,5 +1,6 @@
 # nginx proxy address - http://172.17.0.1:3008
 
+name: psitransfer
 x-logging: &default-logging
   driver: json-file
   options:
@@ -8,27 +9,30 @@ x-logging: &default-logging
 
 services:
   psitransfer:
-    image: psitransfer/psitransfer:latest
+    image: psitrax/psitransfer:latest
+    pull_policy: always
     container_name: psitransfer-app
-    restart: unless-stopped
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
     logging: *default-logging
     networks:
       - psitransfer
     ports:
-      - "3008:3008"
+      - "172.17.0.1:3008:3000"
     environment:
       TZ: ${TZ:-America/New_York}
-      PUID: ${SERVICE_USER:-1000}
-      PGID: ${SERVICE_GROUP:-1000}
+      PSITRANSFER_ADMIN_PASS: ${APP_ADMIN_PASS:-changeme_admin_password}
+      PSITRANSFER_UPLOAD_PASS: ${UPLOAD_PASS:-changeme_upload_password}
+      PSITRANSFER_UPLOAD_DIR: /data
     volumes:
-      - ./volumes/config/psitransfer:/config
       - ./volumes/data/psitransfer:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3008"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
 
 networks:
   psitransfer:
+    name: psitransfer
     external: false
