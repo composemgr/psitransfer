@@ -1,0 +1,49 @@
+name: psitransfer
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+
+  app:
+    image: psitrax/psitransfer:latest
+    container_name: psitransfer-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: psitransfer-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      SITE_NAME: ${APP_ORG_NAME:-PSI Transfer}
+      SITE_URL: https://${BASE_HOST_NAME:-$HOSTNAME}
+      SESSION_SECRET: ${APP_SECRET_KEY:-replace-with-a-random-32-byte-hex-string}
+    volumes:
+      - './volumes/data/psitransfer:/app/data:z'
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.psitransfer-app.entrypoints=http'
+      - 'traefik.http.routers.psitransfer-app.rule=Host(${BASE_HOST_NAME:-$HOSTNAME})'
+      - 'traefik.http.routers.psitransfer-app.middlewares=psitransfer-app-https-redirect'
+      - 'traefik.http.middlewares.psitransfer-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.psitransfer-app-secure.entrypoints=https'
+      - 'traefik.http.routers.psitransfer-app-secure.rule=Host(${BASE_HOST_NAME:-$HOSTNAME})'
+      - 'traefik.http.routers.psitransfer-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.psitransfer-app-secure.service=psitransfer-app'
+      - 'traefik.http.services.psitransfer-app.loadbalancer.server.port=3000'
+    networks:
+      - psitransfer
+      - traefik
+
+networks:
+  psitransfer:
+    name: psitransfer
+    external: false
+  traefik:
+    name: traefik
+    external: true

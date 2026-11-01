@@ -1,62 +1,36 @@
-# nginx proxy address - http://172.17.0.1:3008
+# nginx proxy address - http://172.17.0.1:64318
 
 name: psitransfer
 x-logging: &default-logging
-  driver: json-file
   options:
-    max-size: "5m"
-    max-file: "1"
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
 
 services:
-  psitransfer:
+  app:
     image: psitrax/psitransfer:latest
-    pull_policy: always
     container_name: psitransfer-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
+    pull_policy: always
     logging: *default-logging
-    networks:
-      - psitransfer
-      - proxy
-      - cloudflare
-    ports:
-      - "172.17.0.1:3008:3000"
     environment:
       TZ: ${TZ:-America/New_York}
-      PSITRANSFER_ADMIN_PASS: ${APP_ADMIN_PASS:-changeme_admin_password}
-      PSITRANSFER_UPLOAD_PASS: ${UPLOAD_PASS:-changeme_upload_password}
-      PSITRANSFER_UPLOAD_DIR: /data
       CONTAINER_NAME: psitransfer-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      SITE_NAME: ${APP_ORG_NAME:-PSI Transfer}
+      SITE_URL: https://${BASE_HOST_NAME:-$HOSTNAME}
+      SESSION_SECRET: ${APP_SECRET_KEY:-replace-with-a-random-32-byte-hex-string}
+    ports:
+      - '172.17.0.1:64318:3000'
     volumes:
-      - ./volumes/data/psitransfer:/data
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    labels:
-      - 'traefik.enable=true'
-      - 'cloudflare.enable=true'
-      - 'traefik.docker.network=proxy'
-      - 'cloudflare.service=http://psitransfer-app:3000'
-      - 'cloudflare.hostname=psitransfer.${CLOUDFLARE_ZONE_NAME:-}'
-      - 'traefik.http.routers.psitransfer-app.entrypoints=http'
-      - 'traefik.http.routers.psitransfer-app-secure.tls=true'
-      - 'traefik.http.routers.psitransfer-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.middlewares.psitransfer-app-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.psitransfer-app.middlewares=psitransfer-app-https-redirect'
-      - 'traefik.http.routers.psitransfer-app-secure.entrypoints=https'
-      - 'traefik.http.routers.psitransfer-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.routers.psitransfer-app-secure.tls.certresolver=cloudflare'
-      - 'traefik.http.routers.psitransfer-app-secure.service=psitransfer-app'
-      - 'traefik.http.services.psitransfer-app.loadbalancer.server.port=3000'
+      - './volumes/data/psitransfer:/app/data:z'
+    networks:
+      - psitransfer
 
 networks:
   psitransfer:
     name: psitransfer
     external: false
-  proxy:
-    external: true
-  cloudflare:
-    external: true
