@@ -23,6 +23,12 @@ services:
       SITE_NAME: ${APP_ORG_NAME:-PSI Transfer}
       SITE_URL: https://${BASE_HOST_NAME:-$HOSTNAME}
       SESSION_SECRET: ${APP_SECRET_KEY:-replace-with-a-random-32-byte-hex-string}
+    healthcheck:
+      test: ['CMD', 'nc', '-z', '127.0.0.1', '3000']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     ports:
       - '172.17.0.1:64318:3000'
     volumes:
